@@ -12,7 +12,7 @@ import {
 import { app } from "../config/firebase.config";
 
 const AddStudent = () => {
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(false);
   const [student, setStudent] = useState({
     name: "",
     guardianName: "",
@@ -24,6 +24,7 @@ const AddStudent = () => {
     resultDate: "",
     center: "",
     finalMark: "",
+    dob:""
   });
   const [file, setFile] = useState(null);
   const {
@@ -37,12 +38,13 @@ const AddStudent = () => {
     resultDate,
     center,
     finalMark,
+    dob
   } = student;
   const { addStudentToDb } = useStudent();
   const navigate = useNavigate();
   const uploadFile = (file) => {
     if (!file) return;
-    setLoading(true)
+    setLoading(true);
     const id = Math.random().toString(36).substring(2, 15);
     const fileNameStr = file.name.split(".");
     const ext = fileNameStr[fileNameStr.length - 1];
@@ -73,11 +75,12 @@ const AddStudent = () => {
             ...student,
             admissionDate: formatDate(student.admissionDate),
             resultDate: formatDate(student.resultDate),
+            dob:formatDate(student.dob),
             filePath,
             certUrl: downloadURL,
           };
           addStudentToDb(newStudent);
-          setLoading(false)
+          setLoading(false);
           navigate("/");
         });
       }
@@ -188,8 +191,15 @@ const AddStudent = () => {
           placeHolder="Final Mark(Percentage)"
         />
       </div>
-      <div className="flex justify-center items-center ">
-        <div className="max-w-md">
+      <div className="flex justify-center items-center flex-wrap gap-28">
+        <Input
+          label="dob"
+          type="date"
+          changeHandler={changeHandler}
+          value={dob}
+          placeHolder="Date Of Birth"
+        />
+        <div className="max-w-md ml-1">
           <label
             className="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300 max-w-md"
             htmlFfor="certificate"
