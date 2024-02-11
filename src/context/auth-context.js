@@ -6,31 +6,29 @@ import {
   useEffect,
 } from "react";
 import {
-  getAuth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   updateProfile,
 } from "firebase/auth";
 import { authReducer } from "../reducer/auth-reducer";
-import { app } from "../config/firebase.config";
+import { auth, db } from "../config/firebase.config";
 import { useNavigate } from "react-router-dom";
-import { doc, getDoc, getFirestore, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 const AuthContext = createContext({});
 
 const AuthProvider = ({ children }) => {
   const [authState, authDispatch] = useReducer(authReducer, {
     user: {},
     isLoggedIn: false,
+    isLoading: true,
   });
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-  const [loading, setloading] = useState(false);
+
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const signUp = async ({ name, email, password }) => {
     try {
-      setloading(true);
+      authDispatch({ type: "LOADING", payload: true });
       const { user } = await createUserWithEmailAndPassword(
         auth,
         email,
@@ -48,13 +46,13 @@ const AuthProvider = ({ children }) => {
     } catch (error) {
       setError(error.message);
     } finally {
-      setloading(false);
+      if (authState.isLoading) authDispatch({ type: "LOADING", payload: true });
     }
   };
 
   const logIn = async ({ email, password }) => {
     try {
-      setloading(true);
+      authDispatch({ type: "LOADING", payload: true });
       const { user } = await signInWithEmailAndPassword(auth, email, password);
       const newUser = {
         name: user.displayName,
@@ -64,7 +62,6 @@ const AuthProvider = ({ children }) => {
       const id = user.uid;
       const docRef = doc(db, "admin", id);
       const docSnap = await getDoc(docRef);
-      console.log(docSnap.data());
       if (docSnap.exists() && docSnap.data().role === "admin") {
         sessionStorage.setItem("user", JSON.stringify(newUser));
         authDispatch({
@@ -78,24 +75,29 @@ const AuthProvider = ({ children }) => {
     } catch (error) {
       setError(error.message);
     } finally {
-      setloading(false);
+      if (authState.isLoading)
+        authDispatch({ type: "LOADING", payload: false });
     }
   };
 
   useEffect(() => {
+    authDispatch({ type: "LOADING", payload: true });
     const user = JSON.parse(sessionStorage.getItem("user"));
-    user &&
+    if (user)
       authDispatch({
         type: "LOGIN",
         payload: user,
       });
-    navigate("/", { replace: true });
+    else {
+      authDispatch({ type: "LOADING", payload: false });
+      navigate("/login", { replace: true });
+    }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return (
     <AuthContext.Provider
-      value={{ authState, authDispatch, signUp, logIn, loading, error }}
-    >
+      value={{ authState, authDispatch, signUp, logIn, error }}>
       {children}
     </AuthContext.Provider>
   );

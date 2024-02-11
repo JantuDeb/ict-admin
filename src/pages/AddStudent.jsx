@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import Button from "../components/Button";
 import Input from "../components/Input";
 import { useStudent } from "../context/student-context";
@@ -24,7 +24,7 @@ const AddStudent = () => {
     resultDate: "",
     center: "",
     finalMark: "",
-    dob:""
+    dob: "",
   });
   const [file, setFile] = useState(null);
   const {
@@ -38,10 +38,22 @@ const AddStudent = () => {
     resultDate,
     center,
     finalMark,
-    dob
+    dob,
   } = student;
-  const { addStudentToDb } = useStudent();
+  const { addStudentToDb, getStudent } = useStudent();
   const navigate = useNavigate();
+
+  const [searchParams] = useSearchParams();
+  const studentId = searchParams.get("id");
+  useEffect(() => {
+    if (studentId) updateStudent();
+  }, []);
+
+  async function updateStudent() {
+    const student = await getStudent(studentId);
+    console.log("student", student);
+    setStudent(student);
+  }
   const uploadFile = (file) => {
     if (!file) return;
     setLoading(true);
@@ -75,7 +87,7 @@ const AddStudent = () => {
             ...student,
             admissionDate: formatDate(student.admissionDate),
             resultDate: formatDate(student.resultDate),
-            dob:formatDate(student.dob),
+            dob: formatDate(student.dob),
             filePath,
             certUrl: downloadURL,
           };
@@ -202,8 +214,7 @@ const AddStudent = () => {
         <div className="max-w-md ml-1">
           <label
             className="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300 max-w-md"
-            htmlFfor="certificate"
-          >
+            htmlFfor="certificate">
             Certificate
           </label>
           <input
@@ -218,8 +229,7 @@ const AddStudent = () => {
       <div className="flex justify-center w-full m-2">
         <Link
           to="/"
-          className="flex max-w-sm text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm w-full justify-center px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 mx-2"
-        >
+          className="flex max-w-sm text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm w-full justify-center px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 mx-2">
           Cancel
         </Link>
         <Button type="submit" loading={loading} clickHandler={addStudent}>

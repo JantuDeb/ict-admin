@@ -11,8 +11,14 @@ import {
   DELTE_STUDENT,
   studentReducer,
 } from "../reducer/studentReducer";
-import { deleteDoc, doc, getFirestore, setDoc } from "firebase/firestore";
-import { app } from "../config/firebase.config";
+import {
+  deleteDoc,
+  doc,
+  getDoc,
+  getFirestore,
+  setDoc,
+} from "firebase/firestore";
+import { db, storage } from "../config/firebase.config";
 import { collection, addDoc, getDocs } from "firebase/firestore";
 import { deleteObject, getStorage, ref } from "firebase/storage";
 const StudentContext = createContext({});
@@ -63,8 +69,6 @@ const StudentProvider = ({ children }) => {
   ]);
   const [loading, setloading] = useState(false);
   const [error, setError] = useState("");
-  const db = getFirestore(app);
-
   const addStudentToDb = async (student) => {
     try {
       setloading(true);
@@ -97,7 +101,7 @@ const StudentProvider = ({ children }) => {
     try {
       setloading(true);
       //storage ref
-      const storage = getStorage(app);
+
       const imageRef = ref(storage, filePath);
       await deleteObject(imageRef);
       const docRef = doc(db, "students", id);
@@ -108,6 +112,17 @@ const StudentProvider = ({ children }) => {
     } finally {
       setloading(false);
     }
+  };
+
+  const getStudent = async (id) => {
+    if (Array.isArray(state) && state.length)
+      return state.find((student) => student.id === id);
+    const docRef = doc(db, "students", id);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data();
+    }
+    return {};
   };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => getAllStudents(), []);
@@ -120,8 +135,8 @@ const StudentProvider = ({ children }) => {
         error,
         addStudentToDb,
         deleteStudent,
-      }}
-    >
+        getStudent,
+      }}>
       {children}
     </StudentContext.Provider>
   );
